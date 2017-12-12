@@ -1,9 +1,9 @@
 ;;; versor.el -- versatile cursor
-;;; Time-stamp: <2007-10-07 20:48:59 jcgs>
+;;; Time-stamp: <2017-12-12 13:21:59 jcgs>
 ;;
 ;; emacs-versor -- versatile cursors for GNUemacs
 ;;
-;; Copyright (C) 2004, 2005, 2006, 2007  John C. G. Sturdy
+;; Copyright (C) 2004, 2005, 2006, 2007, 2017  John C. G. Sturdy
 
 ;; Author: John C. G. Sturdy <john@cb1.com>
 ;; Maintainer: John C. G. Sturdy <john@cb1.com>
@@ -236,7 +236,7 @@ argument is negative, otherwise switch on."
 	(add-hook 'post-command-hook 'versor-tracking-hook))
     (remove-hook 'post-command-hook 'versor-tracking-hook)))
 
-(defun keypad-separate ()
+(defun versor-keypad-separate ()
   "Remove mappings of keypad keys."
   (interactive)
   (let* ((holder (cons nil (cdr function-key-map)))
@@ -451,7 +451,7 @@ See the info pages for more details of versor."
 
     (when (memq 'keypad keysets)
       (message "Setting up versor to use keypad")
-      (keypad-separate)
+      (versor-keypad-separate)
       (unless tracking
 	(versor-global-set-key [ kp-left ]    'versor-prev)
 	(versor-global-set-key [ kp-right ]   'versor-next))
@@ -493,7 +493,7 @@ See the info pages for more details of versor."
 
     (when (memq 'keypad-misc keysets)
       (message "Setting up versor to use keypad auxiliary keys")
-      (keypad-separate)
+      (versor-keypad-separate)
       (versor-global-set-key [ kp-enter ]  'versor-copy)
       (define-key (current-global-map)
 	[ kp-insert ] 'versor-insertion-placement-keymap)

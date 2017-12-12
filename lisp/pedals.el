@@ -1,5 +1,5 @@
 ;;;; pedals.el -- set up the six-pedal system
-;;; Time-stamp: <2017-12-07 16:46:45 jcgs>
+;;; Time-stamp: <2017-12-12 14:26:36 jcgs>
 ;;
 ;; Copyright (C) 2004, 2005, 2006, 2007, 2017  John C. G. Sturdy
 ;;
@@ -115,7 +115,7 @@ This symbol may be given inside a vector to define-key etc")
   "The C-M-S-menu pedal.
 This symbol may be given inside a vector to define-key etc")
 
-(defvar pedals-use-kp-divide t
+(defvar pedals-use-kp-divide nil
   ;; maybe should be t on WinNT and nil elsewhere?
   "Whether to use kp-divide instead of kp-down")
 
@@ -170,30 +170,30 @@ This symbol may be given inside a vector to define-key etc")
   (interactive)
   (message "Setting up pedals using kp-divide for onward")
   (setq pedal-onward [ kp-divide ]
-   pedal-C-onward [ C-kp-divide ]
-   pedal-M-onward [ M-kp-divide ]
-   pedal-S-onward [ S-kp-divide ]
-   pedal-C-S-onward [ C-S-kp-divide ]
-   pedal-M-S-onward [ M-S-kp-divide ]
-   pedal-C-M-S-onward [ C-M-S-kp-divide ]
+	pedal-C-onward [ C-kp-divide ]
+	pedal-M-onward [ M-kp-divide ]
+	pedal-S-onward [ S-kp-divide ]
+	pedal-C-S-onward [ C-S-kp-divide ]
+	pedal-M-S-onward [ M-S-kp-divide ]
+	pedal-C-M-S-onward [ C-M-S-kp-divide ]
 
-   pedal-aux [ kp-end ]
-   pedal-C-aux [ C-kp-end ]
-   pedal-M-aux [ M-kp-end ]
-   pedal-S-aux [ S-kp-end ]		; which machine wants this?
-   pedal-S-aux [ S-kp-1 ]
-   pedal-C-S-aux [ C-S-kp-end ]
-   pedal-M-S-aux [ M-S-kp-end ]	; unfortunately not distinguishable by help?
-   pedal-C-M-S-aux [ C-M-S-kp-1 ]
+	pedal-aux [ kp-end ]
+	pedal-C-aux [ C-kp-end ]
+	pedal-M-aux [ M-kp-end ]
+	pedal-S-aux [ S-kp-end ]	; which machine wants this?
+	pedal-S-aux [ S-kp-1 ]
+	pedal-C-S-aux [ C-S-kp-end ]
+	pedal-M-S-aux [ M-S-kp-end ] ; unfortunately not distinguishable by help?
+	pedal-C-M-S-aux [ C-M-S-kp-1 ]
 
-   pedal-menu [ kp-next ]
-   pedal-C-menu [ C-kp-next ]
-   pedal-M-menu [ M-kp-next ]
-   pedal-S-menu [ S-kp-next ]		; which machine wants this?
-   pedal-S-menu [ S-kp-3 ]
-   pedal-C-S-menu [ C-S-kp-next ]
-   pedal-M-S-menu [ M-S-kp-next ]
-   pedal-C-M-S-menu [ C-M-S-kp-next ]))
+	pedal-menu [ kp-next ]
+	pedal-C-menu [ C-kp-next ]
+	pedal-M-menu [ M-kp-next ]
+	pedal-S-menu [ S-kp-next ]	; which machine wants this?
+	pedal-S-menu [ S-kp-3 ]
+	pedal-C-S-menu [ C-S-kp-next ]
+	pedal-M-S-menu [ M-S-kp-next ]
+	pedal-C-M-S-menu [ C-M-S-kp-next ]))
 
 (defun pedals-use-linux-layout ()
   "Set the pedals up as for a typical gnu/linux machine."
@@ -255,12 +255,13 @@ This symbol may be given inside a vector to define-key etc")
 	pedal-C-M-S-menu [ C-M-S-kp-3 ]))
 
 (defun pedals-setup-codes ()
-  "Set up the pedal codes"
+  "Set up the pedal codes."
   ;; I had great trouble getting a setup that would work on NTemacs,
   ;; but eventually found that it was describe-key that was giving the
   ;; impression that the Shift modifier did not work on the keypad
   ;; arrow keys. Hence, all this stuff about num-lock, which I hope to
   ;; get rid of once I've verified that it is in fact OK.
+  (interactive)
   (let ((num-lock (handsfree-use-num-lock)))
     (cond
      (pedals-use-kp-divide
@@ -371,12 +372,12 @@ which are most suitable for duplicating onto pedals."
 (defun view-mode-define-pedals ()
   "Set up pedals for view-mode."
   (eval-after-load "view"
-    (unless (and (boundp 'view-mode-defined-pedals)
-		 view-mode-defined-pedals)
-      (setq view-mode-defined-pedals t)
-      (define-key view-mode-map pedal-onward 'View-scroll-page-forward)
-      (define-key view-mode-map pedal-S-onward 'View-scroll-page-backward)
-      (define-key view-mode-map pedal-menu 'View-quit))))
+    '(unless (and (boundp 'view-mode-defined-pedals)
+		  view-mode-defined-pedals)
+       (setq view-mode-defined-pedals t)
+       (define-key view-mode-map pedal-onward 'View-scroll-page-forward)
+       (define-key view-mode-map pedal-S-onward 'View-scroll-page-backward)
+       (define-key view-mode-map pedal-menu 'View-quit))))
 
 (defun planner-pedal-follow-or-menu ()
   "Visit the link at point, or bring up the main menu if no link is found."
@@ -486,7 +487,6 @@ See handsfree-menus.el for menus."
   (global-set-key pedal-C-menu 'other-window-or-buffer)
   (global-set-key pedal-C-S-menu 'repeat-complex-command )
 
-  ;;  (global-set-key pedal-M-menu 'move-sexp-from-point) ; should become "select value"?
   (global-set-key pedal-M-menu 'versor-begin-altering-item)
   (global-set-key pedal-M-S-menu 'keyboard-quit )
 
