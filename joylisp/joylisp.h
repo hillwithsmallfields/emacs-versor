@@ -3,7 +3,7 @@
 
 /* Communication between GNU Emacs and the Linux Joystick Interface.
 
-   Copyright (C) 2007, 2008, 2009 John C. G. Sturdy
+   Copyright (C) 2007, 2008, 2009, 2017 John C. G. Sturdy
 
    This file is not part of GNU Emacs.
 
@@ -233,5 +233,7 @@ extern void close_diagram();
 extern void js_geometry(char *str);
 
 #endif
+
+extern int debug;
 
 #endif

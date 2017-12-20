@@ -1,6 +1,6 @@
 ;;; joystick.el --- Lisp part of joystick interface for Emacs
 
-;; Copyright (C) 2007, 2008, 2009  John C. G. Sturdy
+;; Copyright (C) 2007, 2008, 2009, 2017  John C. G. Sturdy
 
 ;; Author: John C. G. Sturdy <john@cb1.com>
 ;; Keywords: hardware
@@ -1622,11 +1622,11 @@ DEVICE tells it which device this is for; if t, all devices are ready."
     ;;    |  left    right   speed               help   copy    yank  |   of
     ;;    |      down  +-----------+         +-----------+  find      |   pad
     ;;    +------------|           |---------|           |------------+
-    ;;       /         |   move    |	 |	     |	    \
-    ;;      /	   |	       |	 |	     |	     \
-    ;;     /	   +-----------+  	 +-----------+	      \
-    ;;    /		    /				\ 	       \
-    ;;   /_____________/				 \______________\
+    ;;       /         |   move    |         |           |          \
+    ;;      /          |           |         |           |           \
+    ;;     /           +-----------+         +-----------+            \
+    ;;    /             /                               \              \
+    ;;   /_____________/                                 \______________\
 
     ;; The buttons marked "save" and "yank" also do `exit-minibuffer' and
     ;; `minibuffer-complete', respectively, when in the minibuffer.

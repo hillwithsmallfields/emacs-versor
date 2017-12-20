@@ -1,6 +1,6 @@
 /* Communicate between GNU Emacs and the Linux Joystick Interface.
 
-   Copyright (C) 2007, 2008, 2009, 2010 John C. G. Sturdy
+   Copyright (C) 2007, 2008, 2009, 2010, 2017 John C. G. Sturdy
 
    Based on jstest.c which is Copyright (C) 1996-1999 Vojtech Pavlik
    (Sponsored by SuSE) and released under GPL2.
@@ -172,6 +172,11 @@
        With arg == 0, turn command acknowledgment off; otherwise turn
        it on.
 
+     debug [flag]
+
+       Control output of debug messages; With 0 or non-0, set the flag
+       accordingly; with no arg, toggle it.
+
      hatspeed
      hatspeed value
      hatspeed channel
@@ -194,6 +199,12 @@
      quit
 
        Quit the joystick-to-lisp program.
+
+     raw [flag]
+
+       Control output of the raw button numbers; probably mostly
+       useful for debugging.  With 0 or non-0, set the flag
+       accordingly; with no arg, toggle it.
 
      rumble
 
@@ -383,6 +394,12 @@ static int acknowledge = 0;
 /* Whether we are showing ticks -- mostly for debugging */
 static int show_ticking = 0;
 
+/* Whether to show the raw button numbers from the joystick as well as the names */
+static int show_raw_numbers = 0;
+
+/* Whether to show some debugging output */
+int debug = 0;
+
 /* General internal state */
 
 /* Commands don't always come in in a single read; this is for
@@ -397,10 +414,9 @@ void
 output(char *fmt, ...)
 {
   va_list ap;
-  int formatted;
   va_start(ap, fmt);
 
-  formatted = vsnprintf(output_buf, OUTPUT_BUF_SIZE, fmt, ap);
+  vsnprintf(output_buf, OUTPUT_BUF_SIZE, fmt, ap);
 
   va_end(ap);
 
@@ -518,6 +534,24 @@ output_renumbering(struct controller *controller)
        istick++) {
     struct joystick *stick = controller->sticks[istick];
     int ibutton;
+
+    output("(%sraw-button-map \"%s\"",
+	   stick->name,
+	   stick->device);
+    for (ibutton = 0; ibutton < stick->nbuttons; ibutton++) {
+      int button = stick->btnmap[ibutton];
+      output(" %d", button);
+    }
+    output(")\n");
+
+    output("(%sbutton-map \"%s\"",
+	   stick->name,
+	   stick->device);
+    for (ibutton = 0; ibutton < stick->nbuttons; ibutton++) {
+      int button = stick->btnmap[ibutton];
+      output(" %d", button - BTN_MISC);
+    }
+    output(")\n");
 
     for (ibutton = 0;
 	 ibutton < stick->nbuttons;
@@ -1023,6 +1057,30 @@ command_keymap(struct controller *controller, struct joystick *stick,
 #endif
 }
 
+static void
+command_raw(struct controller *controller, struct joystick *stick,
+	       int cmd_n_parts, char *command_parsing, int has_numeric_arg, int numeric_arg, double float_arg,
+	       int has_name_arg, char *name_arg, int channel, int channel_index, int channel_type)
+{
+  if (has_numeric_arg) {
+    show_raw_numbers = numeric_arg;
+  } else {
+    show_raw_numbers = !show_raw_numbers;
+  }
+}
+
+static void
+command_debug(struct controller *controller, struct joystick *stick,
+	       int cmd_n_parts, char *command_parsing, int has_numeric_arg, int numeric_arg, double float_arg,
+	       int has_name_arg, char *name_arg, int channel, int channel_index, int channel_type)
+{
+  if (has_numeric_arg) {
+    debug = numeric_arg;
+  } else {
+    debug = !debug;
+  }
+}
+
 #ifdef DIAGRAM
 static void
 command_labels(struct controller *controller, struct joystick *stick,
@@ -1045,7 +1103,7 @@ typedef struct {
 		 int, char *, int, int, int);
 } command_descr;
 
-static command_descr commands[24] = {
+static command_descr commands[] = {
   {"quit", command_quit},
   {"rumble", command_rumble},
   {"shock", command_shock},
@@ -1073,6 +1131,8 @@ static command_descr commands[24] = {
 #ifdef DIAGRAM
   {"labels", command_labels},
 #endif
+  {"raw", command_raw},
+  {"debug", command_debug},
   {"help", command_help},
   {NULL, NULL}
 };
@@ -1267,8 +1327,6 @@ get_joystick_config(struct joystick *stick)
     strcpy(stick->brand_name, "Unknown");
   }
 
-  fprintf(stderr, "Got brand name \"%s\" (%d of %d)\n", stick->brand_name, strlen(stick->brand_name), NAME_LENGTH);
-
   output("(%sbegin-init \"%s\")\n",
 	 stick->name,
 	 stick->device);
@@ -1390,6 +1448,15 @@ js_do_button_event(struct controller *controller,
 
   if (event->value) {
 
+    int raw_event_number = event->number;
+    int event_number = stick->btnmap[raw_event_number] - BTN_MISC;
+
+    if (debug && show_raw_numbers) {
+      output("(button-map %d %d %d \"%s\")\n",
+	     raw_event_number, stick->btnmap[raw_event_number], event_number,
+	     Button_Name(stick, event->number));
+    }
+    
     /* value != 0: button has been pressed */
     output("(%s%s%s%s-down)\n",
 	   stick->event_name,
@@ -1431,6 +1498,11 @@ js_do_button_event(struct controller *controller,
 	   Button_Name(stick, event->number),
 	   action);
 
+    if (show_raw_numbers) {
+      output("(js-raw %d)\n",
+	     event->number);
+    }
+    
     if (controller->buttons_down == 0) {
       output("(%schord %d)\n",
 	     stick->name,
@@ -1940,13 +2012,15 @@ main(int argc, char **argv)
 	    break;
 
 	  case JS_EVENT_INIT | JS_EVENT_BUTTON:
-	    output("(%sdeclare-button \"%s\" %d '%s%s \"%s\")\n",
+	    output("(%sdeclare-button \"%s\" %d '%s%s \"%s\" %d %d)\n",
 		   the_controller.sticks[which_stick]->name,
 		   the_controller.sticks[which_stick]->device,
 		   js.number,
 		   the_controller.sticks[which_stick]->prefix,
 		   Button_Name(the_controller.sticks[which_stick], js.number),
-		   the_controller.sticks[which_stick]->btn_abbrevs[js.number]);
+		   the_controller.sticks[which_stick]->btn_abbrevs[js.number],
+		   the_controller.sticks[which_stick]->btnmap[js.number],
+		   the_controller.sticks[which_stick]->btnmap[js.number] - BTN_MISC);
 
 	    await_acknowledgement();
 

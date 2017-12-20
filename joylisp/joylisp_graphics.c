@@ -1,6 +1,6 @@
 /* Animate communication between GNU Emacs and the Linux Joystick Interface.
 
-   Copyright (C) 2007, 2009 John C. G. Sturdy
+   Copyright (C) 2007, 2009, 2017 John C. G. Sturdy
 
    This file is not part of GNU Emacs.
 
@@ -76,17 +76,23 @@ static Colormap theColormap;
 static XColor rgb_colors[20];
 static XColor hardware_colors[20];
 
+typedef enum button_shape {
+  rectangular_button,
+  round_button
+} button_shape;
+
 typedef struct button_rect {
-  short shape, x, y, w, h;
+  button_shape shape;
+  short x, y, w, h;
   char *label;
   int colour;
 } button_rect;
 
-#define UnknownButton(_s_)       { 0, 1, 1, 1, 1, (_s_), 0}
-#define RoundButton(_s_,_x_,_y_,_c_) { 1, (_x_)-ROUND_BUTTON_SIZE/2, (_y_)-ROUND_BUTTON_SIZE/2, ROUND_BUTTON_SIZE, ROUND_BUTTON_SIZE, (_s_), (_c_)}
-#define LongButton(_s_,_x_,_y_,_c_)  { 0, (_x_)-LONG_BUTTON_WIDTH/2, (_y_)-LONG_BUTTON_HEIGHT/2, LONG_BUTTON_WIDTH, LONG_BUTTON_HEIGHT, (_s_), (_c_)}
-#define SmallButton(_s_,_x_,_y_,_c_) { 0, (_x_)-SMALL_BUTTON_WIDTH/2, (_y_)-SMALL_BUTTON_HEIGHT/2, SMALL_BUTTON_WIDTH, SMALL_BUTTON_HEIGHT, (_s_), (_c_)}
-#define AxisLabel(_s_,_x_,_y_,_c_)   { 0, (_x_)-AXIS_LABEL_WIDTH/2, (_y_)-AXIS_LABEL_HEIGHT/2, AXIS_LABEL_WIDTH, AXIS_LABEL_HEIGHT, (_s_), (_c_)}
+#define UnknownButton(_s_)       { rectangular_button, 1, 1, 1, 1, (_s_), 0}
+#define RoundButton(_s_,_x_,_y_,_c_) { round_button, (_x_)-ROUND_BUTTON_SIZE/2, (_y_)-ROUND_BUTTON_SIZE/2, ROUND_BUTTON_SIZE, ROUND_BUTTON_SIZE, (_s_), (_c_)}
+#define LongButton(_s_,_x_,_y_,_c_)  { rectangular_button, (_x_)-LONG_BUTTON_WIDTH/2, (_y_)-LONG_BUTTON_HEIGHT/2, LONG_BUTTON_WIDTH, LONG_BUTTON_HEIGHT, (_s_), (_c_)}
+#define SmallButton(_s_,_x_,_y_,_c_) { rectangular_button, (_x_)-SMALL_BUTTON_WIDTH/2, (_y_)-SMALL_BUTTON_HEIGHT/2, SMALL_BUTTON_WIDTH, SMALL_BUTTON_HEIGHT, (_s_), (_c_)}
+#define AxisLabel(_s_,_x_,_y_,_c_)   { rectangular_button, (_x_)-AXIS_LABEL_WIDTH/2, (_y_)-AXIS_LABEL_HEIGHT/2, AXIS_LABEL_WIDTH, AXIS_LABEL_HEIGHT, (_s_), (_c_)}
 
 static button_rect axis_rects[] = {
   AxisLabel("X+", LEFT(ANALOG_CENTRE_X) + AXIS_LABEL_OFFSET, ANALOG_CENTRE_Y, RED),
@@ -749,42 +755,53 @@ draw_diagram (struct controller *controller,
     button_rect *rect = &button_rects[b_type];
     char *label = rect->label;
 
+    if (debug) {
+      fprintf(stderr, ";; draw %d-->%d-->%d\n", i, stick->btnmap[i], b_type);
+    }
+    
     if (current_labels &&
 	(i < current_labels->n_button_labels)) {
       label = current_labels->button_labels[i];
     }
     if (buttons_down & (1 << i)) {
       XSetForeground(theDisplay, theGC, theBlackPixel);
-      if (rect->shape) {
+      switch (rect->shape) {
+      case round_button:
 	XSetForeground(theDisplay, theGC, theColorPixels[rect->colour]);
 	XFillArc(theDisplay, theWindow, theGC,
 		 rect->x * window_x_scale, rect->y * window_y_scale,
 		 rect->w * window_x_scale, rect->h * window_y_scale,
 		 0, 360*64);
-      } else {
+	break;
+      case rectangular_button:
 	XSetForeground(theDisplay, theGC, theColorPixels[rect->colour]);
 	XFillRectangle(theDisplay, theWindow, theGC,
 		       rect->x * window_x_scale, rect->y * window_y_scale,
 		       rect->w * window_x_scale, rect->h * window_y_scale);
+	break;
       }
     } else {
       XSetForeground(theDisplay, theGC, theWhitePixel);
-      if (rect->shape) {
+      switch (rect->shape) {
+      case round_button:
 	XFillArc(theDisplay, theWindow, theGC,
 		 rect->x * window_x_scale, rect->y * window_y_scale,
 		 rect->w * window_x_scale, rect->h * window_y_scale,
 		 0, 360*64);
-      } else {
+	break;
+      case rectangular_button:
 	XFillRectangle(theDisplay, theWindow, theGC,
 		       rect->x * window_x_scale, rect->y * window_y_scale,
 		       rect->w * window_x_scale, rect->h * window_y_scale);
+	break;
       }
 #if 1
       XSetForeground(theDisplay, theGC, theColorPixels[i]);
 #else
       XSetForeground(theDisplay, theGC, theBlackPixel);
 #endif
-      if (rect->shape) {
+      switch (rect->shape) {
+      case round_button:
 	XSetForeground(theDisplay, theGC, theColorPixels[rect->colour]);
 	XDrawArc(theDisplay, theWindow, theGC,
 		 rect->x * window_x_scale, rect->y * window_y_scale,
@@ -795,7 +812,8 @@ draw_diagram (struct controller *controller,
 		     (XTextWidth(fontStruct, label, strlen(label)) / 2)),
 		    (rect->y + rect->h/2) * window_y_scale + half_ascent,
 		    label, strlen(label));
-      } else {
+	break;
+      case rectangular_button:
 	XSetForeground(theDisplay, theGC, theColorPixels[rect->colour]);
 	XDrawRectangle(theDisplay, theWindow, theGC,
 		       rect->x * window_x_scale, rect->y * window_y_scale,
@@ -805,6 +823,7 @@ draw_diagram (struct controller *controller,
 		     (XTextWidth(fontStruct, label, strlen(label)) / 2)),
 		    (rect->y + rect->h) * window_y_scale - descent,
 		    label, strlen(label));
+	break;
       }
     }
   }
