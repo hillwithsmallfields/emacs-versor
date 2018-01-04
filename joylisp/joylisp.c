@@ -1,6 +1,6 @@
 /* Communicate between GNU Emacs and the Linux Joystick Interface.
 
-   Copyright (C) 2007, 2008, 2009, 2010, 2017 John C. G. Sturdy
+   Copyright (C) 2007, 2008, 2009, 2010, 2017, 2018 John C. G. Sturdy
 
    Based on jstest.c which is Copyright (C) 1996-1999 Vojtech Pavlik
    (Sponsored by SuSE) and released under GPL2.
@@ -31,7 +31,7 @@
    accompanying Emacs-Lisp file `joystick.el'.  In case you want to
    use this in some other application, here are the details anyway.
 
-   Usage: joylisp [--device device] [--event event-label] [--name non-event-label]
+   Usage: joylisp [--device device] [--event event-label] [--debug] [--name non-event-label]
 
    This program converts joystick events to Lisp s-expressions, and
    sends them to stdout.
@@ -302,13 +302,14 @@
 
 #include "joylisp.h"
 
-static char *short_options = "a::d:e:n:p:vVhg:";
+static char *short_options = "a::d:De:n:p:vVhg:";
 
 static struct option long_options[] = {
 #ifdef DIAGRAM
   {"autoraise", optional_argument, 0, 'a'},
 #endif
   {"device", required_argument, 0, 'd'},
+  {"debug", no_argument, 0, 'D'},
   {"prefix", required_argument, 0, 'p'},
   {"geometry", required_argument, 0, 'g'},
   {"event", required_argument, 0, 'e'},
@@ -514,7 +515,7 @@ channel_index_from_axis_name(struct joystick *stick, char *name)
 }
 
 void
-output_renumbering(struct controller *controller)
+output_show_numbering(struct controller *controller)
 {
   int all_buttons = 0, all_axes = 0;
   int istick;
@@ -527,7 +528,7 @@ output_renumbering(struct controller *controller)
     all_axes += stick->naxes;
   }
 
-  output("(joystick-begin-control-renumbering %d %d %d)\n", controller->n_sticks, all_buttons, all_axes);
+  output("(joystick-begin-control-show_numbering %d %d %d)\n", controller->n_sticks, all_buttons, all_axes);
 
   for (istick = 0;
        istick < controller->n_sticks;
@@ -586,7 +587,7 @@ output_renumbering(struct controller *controller)
     }
   }
 
-  output("(joystick-end-control-renumbering)\n");
+  output("(joystick-end-control-show_numbering)\n");
 }
 
 static void
@@ -1027,11 +1028,11 @@ command_acknowledge(struct controller *controller, struct joystick *stick,
 }
 
 static void
-command_renumbering(struct controller *controller, struct joystick *stick,
+command_show_numbering(struct controller *controller, struct joystick *stick,
 		    int cmd_n_parts, char *command_parsing, int has_numeric_arg, int numeric_arg, double float_arg,
 		    int has_name_arg, char *name_arg, int channel, int channel_index, int channel_type)
 {
-  output_renumbering(controller);
+  output_show_numbering(controller);
 }
 
 static void
@@ -1081,6 +1082,14 @@ command_debug(struct controller *controller, struct joystick *stick,
   }
 }
 
+static void
+command_settings(struct controller *controller, struct joystick *stick,
+	       int cmd_n_parts, char *command_parsing, int has_numeric_arg, int numeric_arg, double float_arg,
+	       int has_name_arg, char *name_arg, int channel, int channel_index, int channel_type)
+{
+  output(";; timing %d\n;; ticking %d\n;; acknowledge %d\n;; sensitivity %f\n;; acceleration %f\n;; show_raw_numbers %d\n;; debug %d\n", controller->timing, show_ticking, acknowledge, hat_sensitivity, hat_acceleration, show_raw_numbers, debug);
+}
+
 #ifdef DIAGRAM
 static void
 command_labels(struct controller *controller, struct joystick *stick,
@@ -1125,7 +1134,7 @@ static command_descr commands[] = {
   {"threshold", command_threshold},
   {"hatspeed", command_hatspeed},
   {"acknowledge", command_acknowledge},
-  {"renumbering", command_renumbering},
+  {"show_numbering", command_show_numbering},
   {"report", command_report},
   {"keymap", command_keymap},
 #ifdef DIAGRAM
@@ -1133,6 +1142,7 @@ static command_descr commands[] = {
 #endif
   {"raw", command_raw},
   {"debug", command_debug},
+  {"settings", command_settings},
   {"help", command_help},
   {NULL, NULL}
 };
@@ -1452,9 +1462,10 @@ js_do_button_event(struct controller *controller,
     int event_number = stick->btnmap[raw_event_number] - BTN_MISC;
 
     if (debug && show_raw_numbers) {
-      output("(button-map %d %d %d \"%s\")\n",
+      output("(button-map %d %d %d \"%s\" %d)\n",
 	     raw_event_number, stick->btnmap[raw_event_number], event_number,
-	     Button_Name(stick, event->number));
+	     Button_Name(stick, event->number),
+	     stick->button_event_base);
     }
     
     /* value != 0: button has been pressed */
@@ -1467,7 +1478,7 @@ js_do_button_event(struct controller *controller,
     /* all the current modifiers have now been used */
     controller->used_modifiers |= controller->buttons_down;
 
-    /* add to buttons_down after output, so it doesn't modify itself */
+    /* add to buttons_down *after* output, so it doesn't modify itself */
     controller->buttons_down |= (1 << (event->number + stick->button_event_base));
 
     set_modifiers_buffer(controller);
@@ -1501,6 +1512,7 @@ js_do_button_event(struct controller *controller,
     if (show_raw_numbers) {
       output("(js-raw %d)\n",
 	     event->number);
+      output("(js-mapped %d)\n", stick->btnmap[event->number]);
     }
     
     if (controller->buttons_down == 0) {
@@ -1560,19 +1572,6 @@ js_do_axis_event(struct controller *controller,
     action = "";
   }
 
-#if 1
-  /* Hack this out for now: todo: proper fix */
-  if (!IS_HAT(stick, which_axis)) {
-  return;
-  }
-#endif
-
-  if ((value == 32767) && !IS_HAT(stick, which_axis)) {
-    /* todo: should I always do this? I'm doing it because the stick
-       is sometimes issuing that value spuriously. */
-    return;
-  }
-
 #ifdef OCTANTS
   if (octants && (stick->octant_coding_positions[which_axis] != -1)) {
     if (value == 0) {
@@ -1609,6 +1608,8 @@ js_do_axis_event(struct controller *controller,
     if (controller->timing) {
       double threshold = axis->threshold;
 
+      if (debug) output(";; value %d threshold %f\n", value, threshold);
+      
       if (value < 0) {
 	value = -value;
       }
@@ -1616,8 +1617,11 @@ js_do_axis_event(struct controller *controller,
       axis->proportion = (((double)value)
 			  / STICK_MAX_DISPLACEMENT);
 
+      if (debug) output(";; value now %d proportion %f\n", value, axis->proportion);
+
       if (threshold != 0.0) {
 	if (axis->proportion < threshold) {
+	  if (debug) output(";; proportion below threshold, zeroing it\n");
 	  axis->proportion = 0.0;
 	}
       }
@@ -1630,6 +1634,7 @@ js_do_axis_event(struct controller *controller,
       if ((value == 0.0)
 	  || (axis->countdown == 0.0)
 	  ) {
+	if (debug) output(";; axis zero event\n");
 	output("(%s%s%s%s%s)\n",
 	       stick->event_name,
 	       modifiers_buf,
@@ -1646,6 +1651,7 @@ js_do_axis_event(struct controller *controller,
 	axis->countdown = 1.0;
       }
       axis->action = action;
+      if (debug) output(";; countdown %f, action %s\n", axis->countdown, axis->action);
     } else {
       if (has_value) {
 	output("(%s%s%s%s%s %d)\n",
@@ -1746,6 +1752,9 @@ check_init_complete(struct controller *controller, int which_stick)
       }
       
       output("(all-sticks-initialized)\n");
+      if (debug) {
+	output_show_numbering(controller);
+      }
     }
   }
 }
@@ -1858,6 +1867,9 @@ main(int argc, char **argv)
 	perror("joylisp: too many sticks");
       }
       break;
+    case 'D':
+      debug = 1;
+      break;
     case 'e':			/* event name */
       event_name = optarg;
       if (strlen(event_name) > 512) {
@@ -1940,6 +1952,11 @@ main(int argc, char **argv)
     fcntl(0, F_SETFL, flags | O_NONBLOCK /* | O_DIRECT */);
   }
 
+  if (debug) {
+    output("(btn-misc %d)\n", BTN_MISC);
+    output_show_numbering(&the_controller);
+  }
+  
   while (running) {
 
     FD_ZERO(&set);
@@ -1995,6 +2012,10 @@ main(int argc, char **argv)
 	    output("(%stimestamp %d)\n", the_controller.sticks[which_stick]->event_name, stamptime);
 	  }
 
+	  if (debug) {
+	    output("(event %d %d %d)\n", js.type, js.number, js.value);
+	  }
+	  
 	  switch (js.type) {
 
 	  case JS_EVENT_BUTTON:
@@ -2012,15 +2033,13 @@ main(int argc, char **argv)
 	    break;
 
 	  case JS_EVENT_INIT | JS_EVENT_BUTTON:
-	    output("(%sdeclare-button \"%s\" %d '%s%s \"%s\" %d %d)\n",
+	    output("(%sdeclare-button \"%s\" %d '%s%s \"%s\")\n",
 		   the_controller.sticks[which_stick]->name,
 		   the_controller.sticks[which_stick]->device,
 		   js.number,
 		   the_controller.sticks[which_stick]->prefix,
 		   Button_Name(the_controller.sticks[which_stick], js.number),
-		   the_controller.sticks[which_stick]->btn_abbrevs[js.number],
-		   the_controller.sticks[which_stick]->btnmap[js.number],
-		   the_controller.sticks[which_stick]->btnmap[js.number] - BTN_MISC);
+		   the_controller.sticks[which_stick]->btn_abbrevs[js.number]);
 
 	    await_acknowledgement();
 

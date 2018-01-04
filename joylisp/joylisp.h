@@ -28,13 +28,18 @@
 
 #define NAME_LENGTH 128
 
-#define Raw_Button_Name(_s_,_b_) ((_s_)->button_labels_good ? \
+#define Mapped_Button_Name(_s_,_b_) ((_s_)->button_labels_good ? \
          (button_names[(_s_)->btnmap[(_b_)] - BTN_MISC]) : \
+         fake_button_name((_s_), (_b_)))
+#define Mapped_Axis_Name(_s_,_a_) (axis_names[(_s_)->axmap[(_a_)]])
+
+#define Raw_Button_Name(_s_,_b_) ((_s_)->button_labels_good ? \
+         (button_names[(_b_)+32]) : \
          fake_button_name((_s_), (_b_)))
 #define Raw_Axis_Name(_s_,_a_) (axis_names[(_s_)->axmap[(_a_)]])
 
 #define Button_Name(_st_,_bu_) Raw_Button_Name(_st_,_bu_)
-#define Axis_Name(_st_,_ax_) Raw_Axis_Name(_st_,_ax_)
+#define Axis_Name(_st_,_ax_) Mapped_Axis_Name(_st_,_ax_)
 
 /* This should be large enough, as the only variable parts output for
    joystick events are numbers and modifiers.  The maximum modifiers

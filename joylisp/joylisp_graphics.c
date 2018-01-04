@@ -751,12 +751,12 @@ draw_diagram (struct controller *controller,
   }
 
   for (i = 0; i < stick->nbuttons; i++) {
-    int b_type = stick->btnmap[i] - BTN_MISC;
+    int b_type = i + 32; /* was: stick->btnmap[i] - BTN_MISC; */
     button_rect *rect = &button_rects[b_type];
     char *label = rect->label;
 
     if (debug) {
-      fprintf(stderr, ";; draw %d-->%d-->%d\n", i, stick->btnmap[i], b_type);
+      fprintf(stderr, ";; draw %d-->%d-->%d %s\n", i, stick->btnmap[i], b_type, (buttons_down & (1 << i)) ? "down" : "up");
     }
     
     if (current_labels &&
