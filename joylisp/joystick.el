@@ -1,6 +1,6 @@
 ;;; joystick.el --- Lisp part of joystick interface for Emacs
 
-;; Copyright (C) 2007, 2008, 2009, 2017  John C. G. Sturdy
+;; Copyright (C) 2007, 2008, 2009, 2017, 2018  John C. G. Sturdy
 
 ;; Author: John C. G. Sturdy <john@cb1.com>
 ;; Keywords: hardware
@@ -329,6 +329,8 @@ Returns the process started, which is also stored in `joystick-latest-process'."
 	(setq device joystick-default-device)))
   (unless device
     (throw 'no-joystick nil))
+  (when (assoc device joystick-processes)
+    (error "Joystick interface process already running on %s" device))
   (run-hooks 'joystick-pre-start-hook)
   ;; set the connection type to use a pipe, because otherwise commands
   ;; we send back to the joystick get buffered up until there are huge
@@ -403,18 +405,20 @@ If DEVICE is not given, use `joystick-latest-process'."
 		     nil))))
   (run-hook-with-args 'joystick-stop-hook device)
   (when device
-    (let ((process (cdr (assoc device joystick-processes))))
-      (condition-case evar
-	  (when (processp process)
-	    (joystick-command device "quit")
-	    (sit-for 1)
-	    ;; just in case:
-	    (kill-process process)
-	    )
-	(error nil))))
-  (setq joystick-processes
-	(delete (assoc device joystick-processes)
-		joystick-processes)))
+    (let (descr)
+      (while (setq descr (assoc device joystick-processes))
+	(let ((process (cdr descr)))
+	  (condition-case evar
+	      (when (processp process)
+		(joystick-command device "quit")
+		(sit-for 1)
+		;; just in case:
+		(kill-process process)
+		)
+	    (error nil))
+	  (setq joystick-processes
+		(delete (rassoc process joystick-processes)
+			joystick-processes)))))))
 
 (defun joystick-command (device command)
   "To the joystick interface program for DEVICE, send COMMAND."
@@ -1122,6 +1126,7 @@ still following prefix trees.")
       (setq jse-latest-keymap (current-global-map)))
     (let* ((event-vector (vector event-type))
 	   (binding (lookup-key jse-latest-keymap event-vector)))
+      ;; (message "jse %S %S" event-vector binding)
       (if (or binding
 	      jse-allow-all-events
 	      (key-binding event-vector)
