@@ -372,7 +372,8 @@
   "Configure the joystick for versor."
   (interactive)
   (add-hook 'joystick-bindings-hook 'versor-joystick-bindings)
-  (setq versor-joystick-process (joystick-start)))
+  (catch 'no-joystick
+    (setq versor-joystick-process (joystick-start))))
 
 (defvar versor-joystick-wrappable-commands
   '(versor-previous-word
