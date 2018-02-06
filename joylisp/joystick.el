@@ -246,14 +246,15 @@ As an alist, for completing.")
 
 (defun joystick-find-working-joystick ()
   "Make sure that `joystick-default-device' is valid."
-  (setq joystick-all-joystick-devices (joystick-list-joysticks))
-  (let ((all joystick-all-joystick-devices))
-    (setq joystick-default-device (cdar all))
-    (while (and all
-		(not (file-exists-p joystick-default-device)))
-      (setq joystick-default-device (cdar all)
-	    all (cdr all))))
-  joystick-default-device)
+  (if (null (setq joystick-all-joystick-devices (joystick-list-joysticks)))
+      nil
+    (let ((all joystick-all-joystick-devices))
+      (setq joystick-default-device (cdar all))
+      (while (and all
+		  (not (file-exists-p joystick-default-device)))
+	(setq joystick-default-device (cdar all)
+	      all (cdr all))))
+    joystick-default-device))
 
 (defcustom joystick-pre-start-hook nil
   "Normal hook run just before starting the joystick process.
