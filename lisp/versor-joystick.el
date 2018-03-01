@@ -1,6 +1,6 @@
 ;;; versor-joystick.el --- joystick interface for Versor
 
-;; Copyright (C) 2007, 2008  John Sturdy
+;; Copyright (C) 2007, 2008, 2018  John Sturdy
 
 ;; Author: John Sturdy <jcgs@hosea>
 ;; Keywords: convenience, hardware
@@ -348,7 +348,7 @@
   (global-set-key [ Trigger-up ] 'possibly-other-window-versor-copy)
   (global-set-key [ ThumbBtn-up ] 'versor-kill)
   (global-set-key [ TopBtn-up ] 'possibly-other-window-yank)
-  (global-set-key [ ThumbBtn2-up ] 'find-this-tag)
+  (global-set-key [ ThumbBtn2-up ] 'versor-find-this-tag)
   (define-key emacs-lisp-mode-map
     [ ThumbBtn2-up ] 'versor-find-this-function)
   (define-key lisp-interaction-mode-map
@@ -485,7 +485,16 @@ Optional ARG is passed on."
   "Find the function at point, without prompting."
   (interactive)
   (versor-as-motion-command item
-      (find-function (function-called-at-point))))
+    (find-function (function-called-at-point))))
+
+(defun versor-find-this-tag ()
+  "Find the tag at point, without prompting."
+  (interactive)
+  (let ((item (car (versor-get-current-items))))
+    (versor-as-motion-command item
+      (xref-find-definitions (buffer-substring-no-properties
+			      (versor-overlay-start item)
+			      (versor-overlay-end item))))))
 
 (provide 'versor-joystick)
 
