@@ -471,7 +471,7 @@ set_modifiers_buffer(struct controller *controller)
 	if (mods & 1) {
 	  char *src = controller->btn_abbrevs[i];
 	  while (*src) {
-	    *dest++ = *src++;
+	    *dest++ = *(src)++;
 	  }
 	  *dest++ = '-';
 	}
@@ -1670,6 +1670,11 @@ js_do_axis_event(struct controller *controller,
 	       action);
       }
     }
+
+  if (show_raw_numbers) {
+    output("(js-axis %d %d)\n",
+	   event->number, event->value);
+  }
   controller->used_modifiers |= controller->buttons_down;
 }
 

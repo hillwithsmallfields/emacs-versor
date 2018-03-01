@@ -3,7 +3,7 @@
 
 /* Communication between GNU Emacs and the Linux Joystick Interface.
 
-   Copyright (C) 2007, 2008, 2009, 2017 John C. G. Sturdy
+   Copyright (C) 2007, 2008, 2009, 2017, 2018 John C. G. Sturdy
 
    This file is not part of GNU Emacs.
 
@@ -36,11 +36,14 @@
 #define Raw_Button_Name(_s_,_b_) ((_s_)->button_labels_good ? \
          (button_names[(_b_)+32]) : \
          fake_button_name((_s_), (_b_)))
-#define Raw_Axis_Name(_s_,_a_) (axis_names[(_s_)->axmap[(_a_)]])
+#define Raw_Axis_Name(_s_,_a_) (axis_names[(_a_)])
 
 #define Button_Name(_st_,_bu_) Raw_Button_Name(_st_,_bu_)
+#if 0
 #define Axis_Name(_st_,_ax_) Mapped_Axis_Name(_st_,_ax_)
-
+#else
+#define Axis_Name(_st_,_ax_) Raw_Axis_Name(_st_,_ax_)
+#endif
 /* This should be large enough, as the only variable parts output for
    joystick events are numbers and modifiers.  The maximum modifiers
    on a maximum monstrous joystick (that would be about 80 buttons,
@@ -87,7 +90,7 @@ typedef struct joystick {
      The user can set this (as the second arg when calling the program);
      the default value is a Lisp symbol followed by a space, and quote
      for what follows; but you could make it the start of a symbol name,
-     without the space, so that each event type calls a different Lisp
+       without the space, so that each event type calls a different Lisp
      function. */
   char *event_name;
 
