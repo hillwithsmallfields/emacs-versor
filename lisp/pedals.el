@@ -1,5 +1,5 @@
 ;;;; pedals.el -- set up the six-pedal system
-;;; Time-stamp: <2018-07-05 14:05:00 jcgs>
+;;; Time-stamp: <2018-07-05 14:24:00 jcgs>
 ;;
 ;; Copyright (C) 2004, 2005, 2006, 2007, 2017, 2018  John C. G. Sturdy
 ;;
@@ -297,6 +297,8 @@ This symbol may be given inside a vector to define-key etc")
 (defun pedals-setup-extra ()
   "Set up the extra pedals that I have at home."
   (interactive)
+  (global-set-key-if-known pedal-extra-left 'sexp-preceding-next-parenthesis)
+  (global-set-key-if-known pedal-C-extra-left 'raise-sexp)
   (global-set-key-if-known pedal-extra-middle 'other-window-or-buffer)
   (global-set-key-if-known pedal-extra-right 'versor-copy)
   (global-set-key-if-known pedal-C-extra-right 'versor-kill))
