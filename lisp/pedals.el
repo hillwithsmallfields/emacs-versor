@@ -1,5 +1,5 @@
 ;;;; pedals.el -- set up the six-pedal system
-;;; Time-stamp: <2018-03-01 16:23:32 jcgs>
+;;; Time-stamp: <2018-07-05 14:05:00 jcgs>
 ;;
 ;; Copyright (C) 2004, 2005, 2006, 2007, 2017, 2018  John C. G. Sturdy
 ;;
@@ -115,10 +115,6 @@ This symbol may be given inside a vector to define-key etc")
   "The C-M-S-menu pedal.
 This symbol may be given inside a vector to define-key etc")
 
-(defvar pedals-use-kp-divide nil
-  ;; maybe should be t on WinNT and nil elsewhere?
-  "Whether to use kp-divide instead of kp-down")
-
 (defvar pedal-code-names
   '(pedal-onward
     pedal-C-onward
@@ -165,37 +161,7 @@ This symbol may be given inside a vector to define-key etc")
 
 ;; todo: write around-advice on key-description, to give the pedal names by calling pedal-name where appropriate
 
-(defun pedals-use-kp-divide ()
-  "Set the pedals up for a machine using kp-divide for onward."
-  (interactive)
-  (message "Setting up pedals using kp-divide for onward")
-  (setq pedal-onward [ kp-divide ]
-	pedal-C-onward [ C-kp-divide ]
-	pedal-M-onward [ M-kp-divide ]
-	pedal-S-onward [ S-kp-divide ]
-	pedal-C-S-onward [ C-S-kp-divide ]
-	pedal-M-S-onward [ M-S-kp-divide ]
-	pedal-C-M-S-onward [ C-M-S-kp-divide ]
-
-	pedal-aux [ kp-end ]
-	pedal-C-aux [ C-kp-end ]
-	pedal-M-aux [ M-kp-end ]
-	pedal-S-aux [ S-kp-end ]	; which machine wants this?
-	pedal-S-aux [ S-kp-1 ]
-	pedal-C-S-aux [ C-S-kp-end ]
-	pedal-M-S-aux [ M-S-kp-end ] ; unfortunately not distinguishable by help?
-	pedal-C-M-S-aux [ C-M-S-kp-1 ]
-
-	pedal-menu [ kp-next ]
-	pedal-C-menu [ C-kp-next ]
-	pedal-M-menu [ M-kp-next ]
-	pedal-S-menu [ S-kp-next ]	; which machine wants this?
-	pedal-S-menu [ S-kp-3 ]
-	pedal-C-S-menu [ C-S-kp-next ]
-	pedal-M-S-menu [ M-S-kp-next ]
-	pedal-C-M-S-menu [ C-M-S-kp-next ]))
-
-(defun pedals-use-linux-layout ()
+(defun pedals-kp-down/end/next ()
   "Set the pedals up as for a typical gnu/linux machine."
   (interactive)
   (message "Setting up pedals as for gnu/linux.")
@@ -254,9 +220,10 @@ This symbol may be given inside a vector to define-key etc")
 	pedal-M-S-menu [ M-S-kp-3 ]
 	pedal-C-M-S-menu [ C-M-S-kp-3 ]))
 
-(defun pedals-current ()
+(defun pedals-kp-1/2/3 ()
   "An interactively-created pedals setup."
   (interactive)
+  (message "using pedals-kp-1/2/3")
   (setq pedal-onward [kp-2]
         pedal-C-onward [C-kp-2]
         pedal-M-onward [M-kp-2]
@@ -275,6 +242,31 @@ This symbol may be given inside a vector to define-key etc")
         pedal-C-S-menu [C-kp-3]
         pedal-M-S-menu [M-S-kp-next]))
 
+(defun pedals-kp-div/1/3 ()
+  "An interactively-created pedals setup."
+  (interactive)
+  (setq pedal-onward [kp-divide]
+        pedal-C-onward [C-kp-divide]
+        pedal-M-onward [M-kp-divide]
+        pedal-S-onward [S-kp-divide]
+        pedal-C-S-onward [C-S-kp-divide]
+        pedal-M-S-onward [M-S-kp-divide]
+        pedal-C-M-S-onward [C-M-S-kp-divide]
+        pedal-aux [kp-1]
+        pedal-C-aux [C-kp-1]
+        pedal-M-aux [M-kp-1]
+        pedal-S-aux [S-kp-end]
+        pedal-C-S-aux [C-S-kp-end]
+        pedal-M-S-aux [M-S-kp-end]
+        pedal-C-M-S-aux [C-M-S-kp-end]
+        pedal-menu [kp-3]
+        pedal-C-menu [C-kp-3]
+        pedal-M-menu [M-kp-3]
+        pedal-S-menu [S-kp-next]
+        pedal-C-S-menu [C-S-kp-next]
+        pedal-M-S-menu [M-S-kp-next]
+        pedal-C-M-S-menu [C-M-S-kp-next]))
+
 (defun define-key-if-known (map key definition)
   "In MAP, if KEY is known, bind it to DEFINITION."
   (when key
@@ -285,24 +277,42 @@ This symbol may be given inside a vector to define-key etc")
   (when key
     (global-set-key key definition)))
 
+(defun pedals-setup-extra-codes-kp-add/home/subtract ()
+  "Set up the codes for the extra pedals that I have at home."
+  (interactive)
+  (setq pedal-extra-left [kp-add]
+        pedal-M-extra-left [M-kp-add]
+        pedal-C-extra-left [C-kp-add]
+        pedal-extra-middle [M-kp-home]
+        pedal-extra-right [kp-subtract]
+        pedal-C-extra-right [C-kp-subtract]
+        pedal-M-extra-right [M-kp-subtract]))
+
+(defun pedals-setup-extra-codes ()
+  "Set up the codes for the extra pedals that I have at home."
+  (interactive)
+  ;; only one possible layout so far
+  (pedals-setup-extra-codes-kp-add/home/subtract))
+
+(defun pedals-setup-extra ()
+  "Set up the extra pedals that I have at home."
+  (interactive)
+  (global-set-key-if-known pedal-extra-middle 'other-window-or-buffer)
+  (global-set-key-if-known pedal-extra-right 'versor-copy)
+  (global-set-key-if-known pedal-C-extra-right 'versor-kill))
+
 (defun pedals-setup-codes ()
   "Set up the pedal codes."
-  ;; I had great trouble getting a setup that would work on NTemacs,
-  ;; but eventually found that it was describe-key that was giving the
-  ;; impression that the Shift modifier did not work on the keypad
-  ;; arrow keys. Hence, all this stuff about num-lock, which I hope to
-  ;; get rid of once I've verified that it is in fact OK.
   (interactive)
-  (let ((num-lock (handsfree-use-num-lock)))
-    (cond
-     ((fboundp 'pedals-current) (pedals-current))
-     (pedals-use-kp-divide
-      (pedals-use-kp-divide))
-     ((or (eq system-type 'gnu/linux)
-	  (equal (downcase (system-name)) "mayo"))
-      (pedals-use-linux-layout))
-     (t
-      (pedals-use-default-layout))))
+  (cond
+   ((fboundp 'pedals-current) (pedals-current))
+   ((equal (system-name) "duralium") (pedals-kp-div/1/3))
+   (pedals-use-kp-divide (pedals-use-kp-divide))
+   ((or (eq system-type 'gnu/linux)
+        (equal (downcase (system-name)) "mayo"))
+    (pedals-kp-down/end/next))
+   (t (pedals-use-default-layout)))
+  (when (at-home-p) (pedals-setup-extra))
   (setq pedals-code-alist (pedals-make-code-alist)))
 
 (defun pedals-test-keys ()
