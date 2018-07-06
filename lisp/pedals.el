@@ -1,5 +1,5 @@
 ;;;; pedals.el -- set up the six-pedal system
-;;; Time-stamp: <2018-07-05 14:24:00 jcgs>
+;;; Time-stamp: <2018-07-06 08:44:50 jcgs>
 ;;
 ;; Copyright (C) 2004, 2005, 2006, 2007, 2017, 2018  John C. G. Sturdy
 ;;
@@ -308,6 +308,7 @@ This symbol may be given inside a vector to define-key etc")
   (interactive)
   (cond
    ((fboundp 'pedals-current) (pedals-current))
+   ((equal (system-name) "isaiah.home") (pedals-kp-div/1/3))
    ((equal (system-name) "duralium") (pedals-kp-div/1/3))
    (pedals-use-kp-divide (pedals-use-kp-divide))
    ((or (eq system-type 'gnu/linux)
