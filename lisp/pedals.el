@@ -1,5 +1,5 @@
 ;;;; pedals.el -- set up the six-pedal system
-;;; Time-stamp: <2018-07-06 08:44:50 jcgs>
+;;; Time-stamp: <2018-07-06 08:50:12 jcgs>
 ;;
 ;; Copyright (C) 2004, 2005, 2006, 2007, 2017, 2018  John C. G. Sturdy
 ;;
@@ -272,10 +272,12 @@ This symbol may be given inside a vector to define-key etc")
   (when key
     (define-key map key definition)))
 
-(defun global-set-key-if-known (key definition)
+(defun global-set-key-if-known (key-symbol definition)
   "If KEY is known, bind it globally to DEFINITION."
-  (when key
-    (global-set-key key definition)))
+  (when (boundp key-symbol)
+    (let ((key (symbol-value key-symbol)))
+      (when key
+        (global-set-key key definition)))))
 
 (defun pedals-setup-extra-codes-kp-add/home/subtract ()
   "Set up the codes for the extra pedals that I have at home."
@@ -297,11 +299,12 @@ This symbol may be given inside a vector to define-key etc")
 (defun pedals-setup-extra ()
   "Set up the extra pedals that I have at home."
   (interactive)
-  (global-set-key-if-known pedal-extra-left 'sexp-preceding-next-parenthesis)
-  (global-set-key-if-known pedal-C-extra-left 'raise-sexp)
-  (global-set-key-if-known pedal-extra-middle 'other-window-or-buffer)
-  (global-set-key-if-known pedal-extra-right 'versor-copy)
-  (global-set-key-if-known pedal-C-extra-right 'versor-kill))
+  (pedals-setup-extra-codes)
+  (global-set-key-if-known 'pedal-extra-left 'sexp-preceding-next-parenthesis)
+  (global-set-key-if-known 'pedal-C-extra-left 'raise-sexp)
+  (global-set-key-if-known 'pedal-extra-middle 'other-window-or-buffer)
+  (global-set-key-if-known 'pedal-extra-right 'versor-copy)
+  (global-set-key-if-known 'pedal-C-extra-right 'versor-kill))
 
 (defun pedals-setup-codes ()
   "Set up the pedal codes."
@@ -465,55 +468,55 @@ See handsfree-menus.el for menus."
   (pedals-setup-codes)
 
   ;; left pedal of right cluster -- misc things at point
-  (global-set-key-if-known pedal-aux 'versor-over-next)
-  (global-set-key-if-known pedal-S-aux 'versor-over-prev)
+  (global-set-key-if-known 'pedal-aux 'versor-over-next)
+  (global-set-key-if-known 'pedal-S-aux 'versor-over-prev)
 
-  (global-set-key-if-known pedal-C-aux (if pedal:versor-change-dimension-ctrl
+  (global-set-key-if-known 'pedal-C-aux (if pedal:versor-change-dimension-ctrl
 				  'versor-next-meta-level
 				'versor-dwim ; 'versor-other-end-of-item
 				))
-  (global-set-key-if-known pedal-C-S-aux (if pedal:versor-change-dimension-ctrl
+  (global-set-key-if-known 'pedal-C-S-aux (if pedal:versor-change-dimension-ctrl
 				    'versor-prev-meta-level
 				  'wander-yank-dwim))
 
-  (global-set-key-if-known pedal-M-aux (if pedal:versor-change-dimension-ctrl
+  (global-set-key-if-known 'pedal-M-aux (if pedal:versor-change-dimension-ctrl
 				  'versor-dwim ; 'versor-other-end-of-item
 				'versor-next-meta-level))
-  (global-set-key-if-known pedal-M-S-aux (if pedal:versor-change-dimension-ctrl
+  (global-set-key-if-known 'pedal-M-S-aux (if pedal:versor-change-dimension-ctrl
 				    'wander-yank-dwim
 				  'versor-prev-meta-level))
 
   ;; middle pedal of right cluster -- dimensional navigation
-  (global-set-key-if-known pedal-onward 'versor-next)
-  (global-set-key-if-known pedal-S-onward 'versor-prev)
+  (global-set-key-if-known 'pedal-onward 'versor-next)
+  (global-set-key-if-known 'pedal-S-onward 'versor-prev)
 
-  (global-set-key-if-known pedal-C-onward (if pedal:versor-change-dimension-ctrl
+  (global-set-key-if-known 'pedal-C-onward (if pedal:versor-change-dimension-ctrl
 				     'versor-in
 				   'versor-extend-item-forwards))
-  (global-set-key-if-known pedal-C-S-onward (if pedal:versor-change-dimension-ctrl
+  (global-set-key-if-known 'pedal-C-S-onward (if pedal:versor-change-dimension-ctrl
 				       'versor-out
 				     'versor-extend-item-backwards))
 
-  (global-set-key-if-known pedal-M-onward (if pedal:versor-change-dimension-ctrl
+  (global-set-key-if-known 'pedal-M-onward (if pedal:versor-change-dimension-ctrl
 				     'versor-extend-item-forwards
 				   'versor-in))
-  (global-set-key-if-known pedal-M-S-onward (if pedal:versor-change-dimension-ctrl
+  (global-set-key-if-known 'pedal-M-S-onward (if pedal:versor-change-dimension-ctrl
 				       'versor-extend-item-backwards
 				     'versor-out))
 
   ;; right pedal of right cluster -- menus, yank, repeat, undo, quit
-  (global-set-key-if-known pedal-menu 'handsfree-main-menu)
-  ;;  (global-set-key-if-known pedal-S-menu 'handsfree-popup-tools-menu)
-  (global-set-key-if-known pedal-S-menu 'versor-do-dynamic-menu)
+  (global-set-key-if-known 'pedal-menu 'handsfree-main-menu)
+  ;;  (global-set-key-if-known 'pedal-S-menu 'handsfree-popup-tools-menu)
+  (global-set-key-if-known 'pedal-S-menu 'versor-do-dynamic-menu)
 
-  (global-set-key-if-known pedal-C-menu 'other-window-or-buffer)
-  (global-set-key-if-known pedal-C-S-menu 'repeat-complex-command )
+  (global-set-key-if-known 'pedal-C-menu 'other-window-or-buffer)
+  (global-set-key-if-known 'pedal-C-S-menu 'repeat-complex-command )
 
-  (global-set-key-if-known pedal-M-menu 'versor-begin-altering-item)
-  (global-set-key-if-known pedal-M-S-menu 'keyboard-quit )
+  (global-set-key-if-known 'pedal-M-menu 'versor-begin-altering-item)
+  (global-set-key-if-known 'pedal-M-S-menu 'keyboard-quit )
 
-  ;;  (global-set-key-if-known pedal-C-M-S-aux 'describe-key )
-  ;;  (global-set-key-if-known pedal-C-M-S-onward 'foo )
+  ;;  (global-set-key-if-known 'pedal-C-M-S-aux 'describe-key )
+  ;;  (global-set-key-if-known 'pedal-C-M-S-onward 'foo )
 
   ;; minibuffer -- left pedal is "expand", middle is "navigate", right is "do it"
   (mapcar (lambda (map-name)
