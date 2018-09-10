@@ -1,9 +1,9 @@
 ;;; versor.el -- versatile cursor
-;;; Time-stamp: <2017-12-12 13:21:59 jcgs>
+;;; Time-stamp: <2018-09-10 09:38:32 jcgs>
 ;;
 ;; emacs-versor -- versatile cursors for GNUemacs
 ;;
-;; Copyright (C) 2004, 2005, 2006, 2007, 2017  John C. G. Sturdy
+;; Copyright (C) 2004, 2005, 2006, 2007, 2017, 2018  John C. G. Sturdy
 
 ;; Author: John C. G. Sturdy <john@cb1.com>
 ;; Maintainer: John C. G. Sturdy <john@cb1.com>
@@ -256,6 +256,16 @@ argument is negative, otherwise switch on."
 		  nextpairs (cdr pairs))))))
     (rplacd function-key-map (cdr holder))))
 
+(defun find-executable-on-path (file)
+  "Find FILE anywhere on the execution path."
+  (catch 'found
+    (dolist (dir (parse-colon-path (getenv "PATH")))
+      (when dir
+        (let ((file (expand-file-name file dir)))
+          (when (file-executable-p file)
+            (throw 'found file)))))
+    nil))
+
 (defvar versor-setup-done nil
   "Whether Versor has initialized itself yet.")
 
@@ -352,7 +362,8 @@ See the info pages for more details of versor."
     (message "Setting up versor to log research data")
     (versor-research-start))
 
-  (when (memq 'joystick keysets)
+  (when (and (memq 'joystick keysets)
+             (find-executable-on-path "joylisp"))
     (require 'versor-joystick)
     (message "Setting up versor to use joystick")
     (versor-joystick-setup))
