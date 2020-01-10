@@ -1,7 +1,7 @@
 ;;;; pedals.el -- set up the six-pedal system
-;;; Time-stamp: <2018-07-06 08:50:12 jcgs>
+;;; Time-stamp: <2020-01-10 11:11:52 jsturdy>
 ;;
-;; Copyright (C) 2004, 2005, 2006, 2007, 2017, 2018  John C. G. Sturdy
+;; Copyright (C) 2004, 2005, 2006, 2007, 2017, 2018, 2020  John C. G. Sturdy
 ;;
 ;; This file is part of emacs-versor.
 ;;
@@ -309,15 +309,14 @@ This symbol may be given inside a vector to define-key etc")
 (defun pedals-setup-codes ()
   "Set up the pedal codes."
   (interactive)
+  (let ((hostname (downcase (system-name))))
   (cond
    ((fboundp 'pedals-current) (pedals-current))
-   ((equal (system-name) "isaiah.home") (pedals-kp-div/1/3))
-   ((equal (system-name) "duralium") (pedals-kp-div/1/3))
+   ((equal hostname "isaiah.home") (pedals-kp-div/1/3))
+   ((equal hostname "duralium") (pedals-kp-div/1/3))
+   ((equal hostname "ccsdt68-woc") (pedals-kp-down/end/next))
    (pedals-use-kp-divide (pedals-use-kp-divide))
-   ((or (eq system-type 'gnu/linux)
-        (equal (downcase (system-name)) "mayo"))
-    (pedals-kp-down/end/next))
-   (t (pedals-use-default-layout)))
+   (t (pedals-use-default-layout))))
   (when (at-home-p) (pedals-setup-extra))
   (setq pedals-code-alist (pedals-make-code-alist)))
 
@@ -463,6 +462,8 @@ See versor.el (versatile cursors) for fine and coarse movements.
 See handsfree-menus.el for menus."
   (interactive)
 
+  (message "Setting up pedal codes etc")
+  
   (versor-setup)
 
   (pedals-setup-codes)
@@ -582,7 +583,9 @@ See handsfree-menus.el for menus."
   (yank-menu-define-pedals)
   (comint-define-pedals)
   (autocue-define-pedals)
-  (view-mode-define-pedals))
+  (view-mode-define-pedals)
+
+  (message "Pedal setup complete"))
 
 (defun pedals-draw-bindings (&optional keymap)
   "Draw the pedal bindings, in the main keymap or (from a program) the one given.

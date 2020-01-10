@@ -1,9 +1,9 @@
 ;;; versor.el -- versatile cursor
-;;; Time-stamp: <2018-09-10 09:38:32 jcgs>
+;;; Time-stamp: <2020-01-10 11:37:58 jsturdy>
 ;;
 ;; emacs-versor -- versatile cursors for GNUemacs
 ;;
-;; Copyright (C) 2004, 2005, 2006, 2007, 2017, 2018  John C. G. Sturdy
+;; Copyright (C) 2004, 2005, 2006, 2007, 2017, 2018, 2020  John C. G. Sturdy
 
 ;; Author: John C. G. Sturdy <john@cb1.com>
 ;; Maintainer: John C. G. Sturdy <john@cb1.com>
@@ -500,7 +500,8 @@ See the info pages for more details of versor."
       (versor-global-set-key [ kp-prior ]   'versor-over-over-prev)
       (versor-global-set-key [ kp-next ]    'versor-over-over-next)
       (versor-global-set-key [ C-kp-prior ] 'versor-over-over-start)
-      (versor-global-set-key [ C-kp-next ]  'versor-over-over-end))
+      (versor-global-set-key [ C-kp-next ]  'versor-over-over-end)
+      (message "Versor keypad setup complete"))
 
     (when (memq 'keypad-misc keysets)
       (message "Setting up versor to use keypad auxiliary keys")
@@ -518,7 +519,7 @@ See the info pages for more details of versor."
       (define-key versor-insertion-placement-keymap [ kp-right ] 'versor-insert-after)
       (define-key versor-insertion-placement-keymap [ kp-up ]    'versor-insert-around)
       (define-key versor-insertion-placement-keymap [ kp-down ]  'versor-replace)
-      ))
+      (message "Versor auxiliary keypad setup complete")))
 
   (setq versor-mode t)
 
