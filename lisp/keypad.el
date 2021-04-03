@@ -1,7 +1,7 @@
 ;;;; keypad.el -- define keypad keys for using keypad almost in isolation
-;;; Time-stamp: <2007-08-22 19:30:46 jcgs>
+;;; Time-stamp: <2021-04-03 16:06:30 jcgs>
 
-;; Copyright (C) 2007, John C. G. Sturdy
+;; Copyright (C) 2007, 2021, John C. G. Sturdy
 
 ;; Author: John C. G. Sturdy <john@cb1.com>
 ;; Maintainer: John C. G. Sturdy <john@cb1.com>
@@ -31,17 +31,13 @@
 ;; 
 
 ;;; Code:
-(defun keypad-setup ()
+(defun versor-keypad-setup ()
   "Set up the keypad for being the main editing input."
   (interactive)
   (global-set-key [ pause ] 'handsfree-main-menu)
   (global-set-key [ C-pause ] 'versor-do-dynamic-menu)
   ;; fill in the rest
 )
-
-(provide 'keypad)
-
-;;; end of keypad.el
 
 (provide 'keypad)
 
